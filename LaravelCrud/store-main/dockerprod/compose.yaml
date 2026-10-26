@@ -1,0 +1,53 @@
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-app
+    container_name: laravel-app
+    restart: unless-stopped
+    working_dir: /var/www/public
+    volumes:
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - laravel
+    depends_on:
+      - postgres
+  web:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www/public
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - laravel
+
+  postgres:
+    image: postgres:17-alpine
+    env_file:
+      - .env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - laravel
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+volumes:
+  postgres_data:
+  redis_data:
